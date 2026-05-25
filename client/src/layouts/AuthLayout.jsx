@@ -1,3 +1,5 @@
+import logo from "/assets/logo2.png";
+
 export default function AuthLayout({
     title,
     subtitle,
@@ -88,6 +90,20 @@ export default function AuthLayout({
                     }}
                 >
                     <div style={{ width: "100%", maxWidth: "430px" }}>
+                        {/* ── Logo ────────────────────────────────────────── */}
+                        <div style={{ display: "flex", justifyContent: "center", marginBottom: "24px" }}>
+                            <img
+                                src={logo}
+                                alt="AI Image Detection Logo"
+                                style={{
+                                    height: "52px",
+                                    width: "auto",
+                                    objectFit: "contain",
+                                    display: "block",
+                                }}
+                            />
+                        </div>
+
                         <div style={{ marginBottom: "22px" }}>
                             <h2
                                 style={{

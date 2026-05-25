@@ -1,52 +1,97 @@
-from PIL import Image
+from PIL import Image, ImageChops, ImageEnhance
 import numpy as np
 import cv2
-from io import BytesIO
+import os
 
 
-def preprocess_image(pil_img, blocky_save_path=None, forensic_save_path=None):
-    img = pil_img.convert("RGB")
+# ==============================
+# 🔥 HIGH PASS FILTER
+# ==============================
+def high_pass_filter(pil_img):
+    try:
+        img = np.array(pil_img.convert("RGB"))
 
-    # Step 1: Resize to 32x32
-    img = img.resize((32, 32))
+        # Blur image
+        blur = cv2.GaussianBlur(img, (9, 9), 0)
 
-    # Step 2: Convert to numpy array
-    img_array = np.array(img)
+        # High-pass = original - blur
+        high_pass = cv2.subtract(img, blur)
 
-    # Step 3: Normalize (0–1)
-    img_array = img_array / 255.0
+        return Image.fromarray(high_pass)
 
-    # Step 4: Slight blur
-    img_array = cv2.GaussianBlur(img_array, (3, 3), 0)
+    except Exception as e:
+        print("HIGH PASS ERROR:", e)
+        return None
 
-    # Step 5: Back to image
-    output = (img_array * 255).astype(np.uint8)
-    blocky_img = Image.fromarray(output)
 
-    if blocky_save_path:
-        blocky_img.save(blocky_save_path)
+# ==============================
+# 🔥 ELA (Error Level Analysis)
+# ==============================
+def ela_image(pil_img, quality=90):
+    try:
+        temp_path = "temp_ela.jpg"
 
-    # Step 6: Red forensic preprocessing
-    forensic_base = blocky_img.convert("RGB").resize((224, 224))
+        # Save compressed image
+        pil_img.save(temp_path, "JPEG", quality=quality)
 
-    gray = np.array(forensic_base.convert("L"), dtype=np.float32) / 255.0
+        compressed = Image.open(temp_path)
 
-    hpf = cv2.Laplacian(np.array(forensic_base), cv2.CV_32F, ksize=3)
-    hpf = np.linalg.norm(hpf, axis=2)
-    hpf = (hpf - hpf.min()) / (hpf.max() - hpf.min() + 1e-8)
+        # Difference
+        diff = ImageChops.difference(pil_img, compressed)
 
-    buf = BytesIO()
-    forensic_base.save(buf, format="JPEG", quality=95)
-    buf.seek(0)
-    rec = Image.open(buf).convert("RGB")
+        # Scale difference
+        extrema = diff.getextrema()
+        max_diff = max([ex[1] for ex in extrema])
 
-    ela = np.abs(np.array(forensic_base) - np.array(rec))
-    ela = cv2.cvtColor(ela.astype(np.uint8), cv2.COLOR_RGB2GRAY) / 255.0
+        scale = 255.0 / max_diff if max_diff != 0 else 1
 
-    combined = np.stack([gray * 255, hpf * 255, ela * 255], axis=-1)
-    forensic_img = Image.fromarray(combined.astype(np.uint8))
+        diff = ImageEnhance.Brightness(diff).enhance(scale)
 
-    if forensic_save_path:
-        forensic_img.save(forensic_save_path)
+        # Cleanup temp file
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
 
-    return forensic_img
+        return diff
+
+    except Exception as e:
+        print("ELA ERROR:", e)
+        return None
+
+
+# ==============================
+# 🔥 MAIN FUNCTION (3 IMAGES)
+# ==============================
+def generate_display_images(pil_img, base_path):
+    try:
+        if not hasattr(pil_img, "convert"):
+            return {}
+
+        img = pil_img.convert("RGB")
+
+        # 🔥 File paths
+        original_path = base_path.replace(".", "_original.", 1)
+        highpass_path = base_path.replace(".", "_highpass.", 1)
+        ela_path = base_path.replace(".", "_ela.", 1)
+
+        # 🔥 Save Original copy
+        img.save(original_path)
+
+        # 🔥 High-pass image
+        hp = high_pass_filter(img)
+        if hp:
+            hp.save(highpass_path)
+
+        # 🔥 ELA image
+        ela = ela_image(img)
+        if ela:
+            ela.save(ela_path)
+
+        return {
+            "original": original_path,
+            "highpass": highpass_path,
+            "ela": ela_path,
+        }
+
+    except Exception as e:
+        print("DISPLAY IMAGE ERROR:", e)
+        return {}

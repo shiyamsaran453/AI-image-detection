@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { removeToken } from "../../utils/storage";
 import Button from "./Button";
+import logo from "/assets/logo2.png";
 
 export default function Navbar({ title = "AI Image Detection" }) {
     const location = useLocation();
@@ -39,27 +40,40 @@ export default function Navbar({ title = "AI Image Detection" }) {
                     flexWrap: "wrap",
                 }}
             >
-                <div>
-                    <p
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <img
+                        src={logo}
+                        alt="AI Image Detection Logo"
                         style={{
-                            margin: 0,
-                            color: "#4f46e5",
-                            fontSize: "12px",
-                            fontWeight: 800,
-                            letterSpacing: "1px",
+                            height: "44px",
+                            width: "auto",
+                            objectFit: "contain",
+                            display: "block",
+                            flexShrink: 0,
                         }}
-                    >
-                        AI IMAGE DETECTION
-                    </p>
-                    <h2
-                        style={{
-                            margin: "4px 0 0",
-                            fontSize: "20px",
-                            color: "#111827",
-                        }}
-                    >
-                        {title}
-                    </h2>
+                    />
+                    <div>
+                        <p
+                            style={{
+                                margin: 0,
+                                color: "#4f46e5",
+                                fontSize: "12px",
+                                fontWeight: 800,
+                                letterSpacing: "1px",
+                            }}
+                        >
+                            AI IMAGE DETECTION
+                        </p>
+                        <h2
+                            style={{
+                                margin: "4px 0 0",
+                                fontSize: "20px",
+                                color: "#111827",
+                            }}
+                        >
+                            {title}
+                        </h2>
+                    </div>
                 </div>
 
                 <div

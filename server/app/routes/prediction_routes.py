@@ -35,9 +35,13 @@ def predict_image_route(
                 detail="Only JPG, JPEG, PNG, and WEBP image files are allowed",
             )
 
+        # 🔥 Save uploaded image
         file_path = save_uploaded_file(file)
+
+        # 🔥 Run prediction
         prediction = run_model_prediction(file_path)
 
+        # 🔥 Save to DB
         prediction_id = save_prediction_to_db(
             user_id=current_user["user_id"],
             image_path=file_path,
@@ -45,6 +49,7 @@ def predict_image_route(
             confidence=prediction["confidence"],
         )
 
+        # 🔥 FINAL RESPONSE (UPDATED)
         return {
             "message": "Prediction completed successfully",
             "prediction_id": prediction_id,
@@ -52,6 +57,7 @@ def predict_image_route(
                 "label": prediction["label"],
                 "confidence": prediction["confidence"],
                 "image_path": file_path,
+                "images": prediction.get("images", {})  # ✅ IMPORTANT
             },
         }
 
