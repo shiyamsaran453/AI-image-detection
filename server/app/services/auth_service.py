@@ -23,47 +23,55 @@ def serialize_user(user: dict):
 def register_user(name: str, email: str, password: str):
     normalized_email = normalize_email(email)
 
-    existing_user = users_collection.find_one({"email": normalized_email})
-    if existing_user:
-        return None, "Email already registered"
+    try:
+        existing_user = users_collection.find_one({"email": normalized_email})
+        if existing_user:
+            return None, "Email already registered"
 
-    hashed_password = hash_password(password)
+        hashed_password = hash_password(password)
 
-    new_user = {
-        "name": name.strip(),
-        "email": normalized_email,
-        "password": hashed_password,
-        "created_at": datetime.utcnow().isoformat(),
-    }
+        new_user = {
+            "name": name.strip(),
+            "email": normalized_email,
+            "password": hashed_password,
+            "created_at": datetime.utcnow().isoformat(),
+        }
 
-    result = users_collection.insert_one(new_user)
-    created_user = users_collection.find_one({"_id": result.inserted_id})
+        result = users_collection.insert_one(new_user)
+        created_user = users_collection.find_one({"_id": result.inserted_id})
 
-    return serialize_user(created_user), None
+        return serialize_user(created_user), None
+    except Exception as db_err:
+        print("Database error during register:", str(db_err))
+        return None, "Database connection error. Please verify MONGO_URL configuration."
 
 
 def login_user(email: str, password: str):
     normalized_email = normalize_email(email)
 
-    user = users_collection.find_one({"email": normalized_email})
-    if not user:
-        return None, "Invalid email or password"
+    try:
+        user = users_collection.find_one({"email": normalized_email})
+        if not user:
+            return None, "Invalid email or password"
 
-    if not verify_password(password, user["password"]):
-        return None, "Invalid email or password"
+        if not verify_password(password, user["password"]):
+            return None, "Invalid email or password"
 
-    token = create_access_token(
-        {
-            "user_id": str(user["_id"]),
-            "email": user["email"],
-        }
-    )
+        token = create_access_token(
+            {
+                "user_id": str(user["_id"]),
+                "email": user["email"],
+            }
+        )
 
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user": serialize_user(user),
-    }, None
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "user": serialize_user(user),
+        }, None
+    except Exception as db_err:
+        print("Database error during login:", str(db_err))
+        return None, "Database connection error. Please verify MONGO_URL configuration."
 
 
 def get_user_by_id(user_id: str):
