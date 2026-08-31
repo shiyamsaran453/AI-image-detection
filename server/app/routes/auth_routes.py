@@ -16,7 +16,8 @@ def register(payload: RegisterSchema):
         )
 
         if error:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+            status_code = status.HTTP_503_SERVICE_UNAVAILABLE if "Database" in error else status.HTTP_400_BAD_REQUEST
+            raise HTTPException(status_code=status_code, detail=error)
 
         return {
             "message": "User registered successfully",
@@ -41,7 +42,8 @@ def login(payload: LoginSchema):
         )
 
         if error:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=error)
+            status_code = status.HTTP_503_SERVICE_UNAVAILABLE if "Database" in error else status.HTTP_401_UNAUTHORIZED
+            raise HTTPException(status_code=status_code, detail=error)
 
         return {
             "message": "Login successful",
