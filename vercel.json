@@ -1,31 +1,17 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/index.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "client/package.json",
-      "use": "@vercel/static-build"
-    }
-  ],
+  "buildCommand": "cd client && npm install && npm run build",
+  "outputDirectory": "client/dist",
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "api/index.py"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "/client/dist/assets/$1"
-    },
-    {
-      "src": "/favicon.svg",
-      "dest": "/client/dist/favicon.svg"
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/client/dist/index.html"
+      "dest": "/index.html"
     }
   ]
 }
